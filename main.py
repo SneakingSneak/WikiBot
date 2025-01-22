@@ -1,10 +1,15 @@
+import os
 import feedparser
 import requests
 import time
+from flask import Flask
 
 # Replace these with your Fandom RSS feed URL and Discord webhook URL
 RSS_FEED_URL = "https://phoenix-county.fandom.com/wiki/Special:RecentChanges?feed=rss"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1331651071571136544/g0w3weEo0oDRC3XSy2jlN5Bq3KophaK6J9lOA4ujT-x67MdwDxJO-FJD5OaV2t53WSTE"
+
+# Initialize Flask app
+app = Flask(__name__)
 
 def fetch_feed():
     return feedparser.parse(RSS_FEED_URL).entries
@@ -37,7 +42,26 @@ def send_to_discord(message):
     else:
         print(f"Failed to send message: {response.status_code} - {response.text}")
 
+# Flask route to check if server is running
+@app.route('/')
+def home():
+    return 'RSS Feed Discord Bot is running!'
+
+# If you have other routes or features, you can define them below as needed
+
+# Start Flask app in a background thread while running the feed fetch loop
+def start_flask():
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
+
 if __name__ == "__main__":
+    from threading import Thread
+
+    # Start Flask server in a separate thread
+    flask_thread = Thread(target=start_flask)
+    flask_thread.daemon = True  # This ensures the Flask server runs in the background
+    flask_thread.start()
+
+    # Now, continue with your existing feed-fetching logic
     seen_entries = set()
 
     while True:
